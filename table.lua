@@ -107,7 +107,11 @@ local function compare_find(splitup)
 
 				local cells = 0
 				for i, cell in pairs(row) do
-					if splitup[index][i] == cell then
+					if cell:find("group:") == 1 then
+						if minetest.get_item_group(splitup[index][i], cell:gsub("group:", "")) > 0 then
+							cells = cells + 1
+						end
+					elseif splitup[index][i] == cell then
 						cells = cells + 1
 					end
 				end
@@ -277,24 +281,3 @@ minetest.register_node("magicalities:table", {
 	},
 	groups = {choppy = 2, oddly_breakable_by_hand = 1, mg_table = 1}
 })
-
--- Basic recipes
-local recipes = {
-	{
-		input = {
-			{"default:gold_ingot", "default:glass", "default:gold_ingot"},
-			{"default:glass",      "",              "default:glass"},
-			{"default:gold_ingot", "default:glass", "default:gold_ingot"},
-		},
-		output = "default:diamond",
-		requirements = {
-			["earth"] = 10,
-			["light"] = 5,
-			["dark"]  = 5
-		}
-	}
-}
-
-for _, recipe in pairs(recipes) do
-	magicalities.arcane.register_recipe(recipe)
-end

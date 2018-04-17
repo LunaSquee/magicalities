@@ -1,5 +1,72 @@
 -- Magicalities crystals
 
+local randbuff = PcgRandom(os.clock())
+
+local function generate_crystal_buffer(pos)
+	local final    = {}
+	local node     = minetest.get_node(pos)
+	local nodedef  = minetest.registered_nodes[node.name]
+	local self_cnt = randbuff:next(10, 60)
+
+	for name, data in pairs(magicalities.elements) do
+		if #final > 5 then break end
+		if not data.inheritance then
+			if name == nodedef["_element"] then
+				final[name] = {self_cnt, self_cnt}
+			else
+				if randbuff:next(0, 5) == 0 then
+					local cnt = randbuff:next(0, math.floor(self_cnt / 4))
+					final[name] = {cnt, cnt}
+				end
+			end
+		else
+			if randbuff:next(0, 15) == 0 then
+				local cnt = randbuff:next(0, math.floor(self_cnt / 8))
+				final[name] = {cnt, cnt}
+			end
+		end
+	end
+
+	return final
+end
+
+local function crystal_rightclick(pos, node, clicker, itemstack, pointed_thing)
+	local output = generate_crystal_buffer(pos)
+	local meta   = minetest.get_meta(pos)
+
+	-- Add contents to the crystal
+	local contents = minetest.deserialize(meta:get_string("contents"))
+	if not contents then
+		contents = generate_crystal_buffer(pos)
+		meta:set_string("contents", minetest.serialize(contents))
+	end
+
+	-- Check for wand
+	if minetest.get_item_group(itemstack:get_name(), "wand") == 0 then
+		return itemstack
+	end
+
+	local one_of_each = {}
+	for name, count in pairs(contents) do
+		if count[1] > 0 then
+			one_of_each[name] = 1
+		end
+	end
+
+	local can_put = magicalities.wands.wand_insertable_contents(itemstack, one_of_each)
+	for name, count in pairs(can_put) do
+		if count > 0 then
+			contents[name][1] = contents[name][1] - count
+		end
+	end
+
+	itemstack = magicalities.wands.wand_insert_contents(itemstack, can_put)
+	magicalities.wands.update_wand_desc(itemstack)
+	meta:set_string("contents", minetest.serialize(contents))
+
+	return itemstack
+end
+
 function magicalities.register_crystal(element, description, color)
 	-- Crystal Item
 	minetest.register_craftitem("magicalities:crystal_"..element, {
@@ -53,6 +120,8 @@ function magicalities.register_crystal(element, description, color)
 		sunlight_propagates = true,
 		is_ground_content = false,
 		sounds = default.node_sound_glass_defaults(),
+
+		on_rightclick = crystal_rightclick,
 	})
 
 	-- Crystal Block
@@ -85,19 +154,6 @@ function magicalities.register_crystal(element, description, color)
 		y_min          = -31000,
 	})
 
-	-- Crafting between clusters, shards and blocks
-	minetest.register_craft({
-		type = "shapeless",
-		output = "magicalities:crystal_cluster_"..element,
-		recipe = {
-			"magicalities:crystal_"..element,
-			"magicalities:crystal_"..element,
-			"magicalities:crystal_"..element,
-			"magicalities:crystal_"..element,
-			"magicalities:crystal_"..element
-		},
-	})
-
 	minetest.register_craft({
 		type = "shapeless",
 		output = "magicalities:crystal_block_"..element,
@@ -123,9 +179,38 @@ function magicalities.register_crystal(element, description, color)
 	})
 end
 
--- Register all crystals
-for name, data in pairs(magicalities.elements) do
-	if not data.inheritance then
-		magicalities.register_crystal(name, data.description, data.color)
+-- Register refill ABMs
+minetest.register_abm({
+	label     = "Crystal Elements Refill",
+	nodenames = {"group:crystal_cluster"},
+	interval  = 60.0,
+	chance    = 10,
+	action    = function (pos, node, active_object_count, active_object_count_wider)
+		local meta = minetest.get_meta(pos)
+		local contents = meta:get_string("contents")
+		if contents ~= "" then
+			-- Regenerate some elements
+			contents = minetest.deserialize(contents)
+			local count = 0
+			for _, v in pairs(contents) do
+				count = count + 1
+			end
+
+			local mcnt    = randbuff:next(1, count)
+			local cnt     = 0
+			for name, data in pairs(contents) do
+				if cnt == mcnt then break end
+				if type(data) ~= 'table' then break end
+
+				if data[1] < data[2] then
+					data[1] = data[1] + 1
+					cnt = cnt + 1
+				end
+			end
+
+			if cnt == 0 then return end
+
+			meta:set_string("contents", minetest.serialize(contents))
+		end 
 	end
-end
+})

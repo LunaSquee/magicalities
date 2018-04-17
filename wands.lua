@@ -3,7 +3,7 @@
 magicalities.wands = {}
 
 local transform_recipes = {
-	["mg_table"] = {result = "magicalities:arcane_table", requires = {["earth"] = 5, ["light"] = 5}}
+	["mg_table"] = {result = "magicalities:arcane_table", requirements = nil}
 }
 
 local wandcaps = {
@@ -43,15 +43,18 @@ function magicalities.wands.update_wand_desc(stack)
 		end
 	end
 
+	local elems = {}
 	for elem, amount in pairs(data_table) do
 		local dataelem = magicalities.elements[elem]
 		if amount > 0 then
-			strbld = strbld.."\n"
-			strbld = strbld..minetest.colorize(dataelem.color, dataelem.description.." ")
-			strbld = strbld..align(longest_desc * 2 - #dataelem.description)
-			strbld = strbld..amount.."/"..capcontents
+			elems[#elems + 1] = minetest.colorize(dataelem.color, dataelem.description.." ")..
+								align(longest_desc * 2 - #dataelem.description)..
+								amount.."/"..capcontents
 		end
 	end
+
+	table.sort(elems)
+	strbld = strbld .. table.concat(elems, "\n")
 
 	meta:set_string("description", strbld)
 end
@@ -91,6 +94,48 @@ function magicalities.wands.wand_take_contents(stack, to_take)
 	return stack
 end
 
+-- Add wand contents
+function magicalities.wands.wand_insert_contents(stack, to_put)
+	local meta = stack:get_meta()
+	local data_table = minetest.deserialize(meta:get_string("contents"))
+	local cap = minetest.registered_items[stack:get_name()]["_cap_max"]
+	local leftover = {}
+
+	for name, count in pairs(to_put) do
+		if data_table[name] then
+			if data_table[name] + count > cap then
+				data_table[name] = cap
+				leftover[name] = (data_table[name] + count) - cap
+			else
+				data_table[name] = data_table[name] + count
+			end
+		end
+	end
+	
+	local data_res = minetest.serialize(data_table)
+	meta:set_string("contents", data_res)
+
+	return stack, leftover
+end
+
+-- Can add wand contents
+function magicalities.wands.wand_insertable_contents(stack, to_put)
+	local meta = stack:get_meta()
+	local data_table = minetest.deserialize(meta:get_string("contents"))
+	local cap = minetest.registered_items[stack:get_name()]["_cap_max"]
+	local insertable = {}
+
+	for name, count in pairs(to_put) do
+		if data_table[name] then
+			if data_table[name] + count < cap + 1 then
+				insertable[name] = count
+			end
+		end
+	end
+
+	return insertable
+end
+
 -- Initialize wand metadata
 local function initialize_wand(stack)
 	local data_table = {}
@@ -116,6 +161,7 @@ local function wand_action(itemstack, placer, pointed_thing)
 		magicalities.wands.update_wand_desc(itemstack)
 	end
 
+	-- Replacement
 	local to_replace = nil
 	for grp, result in pairs(transform_recipes) do
 		if minetest.get_item_group(node.name, grp) > 0 then
@@ -124,10 +170,20 @@ local function wand_action(itemstack, placer, pointed_thing)
 		end
 	end
 
-	if not to_replace then return itemstack end
-	if to_replace.requires then
-		if not magicalities.wands.wand_has_contents(itemstack, to_replace.requires) then return itemstack end
-		itemstack = magicalities.wands.wand_take_contents(itemstack, to_replace.requires)
+	-- Call on_rightclick on the node instead if it cannot be replaced
+	if not to_replace then
+		local nodedef = minetest.registered_nodes[node.name]
+		
+		if nodedef.on_rightclick then
+			itemstack = nodedef.on_rightclick(pointed_thing.under, node, placer, itemstack, pointed_thing)
+		end
+
+		return itemstack
+	end
+	
+	if to_replace.requirements then
+		if not magicalities.wands.wand_has_contents(itemstack, to_replace.requirements) then return itemstack end
+		itemstack = magicalities.wands.wand_take_contents(itemstack, to_replace.requirements)
 		magicalities.wands.update_wand_desc(itemstack)
 	end
 
@@ -206,18 +262,3 @@ function magicalities.wands.register_wand(name, data)
 		groups = {wand = 1}
 	})
 end
-
--- Iron
-magicalities.wands.register_wand("steel", {
-	description = "Steel-Capped Wand",
-	image       = "magicalities_wand_iron.png",
-	wand_cap    = 25,
-})
-
--- Gold
-magicalities.wands.register_wand("gold", {
-	description = "Gold-Capped Wand",
-	image       = "magicalities_wand_gold.png",
-	wand_cap    = 50,
-})
-

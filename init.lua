@@ -6,12 +6,12 @@ magicalities.modpath = modpath
 
 magicalities.elements = {
 	-- Base Elements
-	["air"]   = {color = "#ffff00", description = "Air",   inheritance = nil},
 	["water"] = {color = "#003cff", description = "Water", inheritance = nil},
-	["fire"]  = {color = "#ff2424", description = "Fire",  inheritance = nil},
 	["earth"] = {color = "#00a213", description = "Earth", inheritance = nil},
 	["light"] = {color = "#ffffff", description = "Light", inheritance = nil},
+	["fire"]  = {color = "#ff2424", description = "Fire",  inheritance = nil},
 	["dark"]  = {color = "#232323", description = "Dark",  inheritance = nil},
+	["air"]   = {color = "#ffff00", description = "Air",   inheritance = nil},
 
 	-- Inherited Elements
 }
@@ -24,3 +24,9 @@ dofile(modpath.."/wands.lua")
 
 -- Tables
 dofile(modpath.."/table.lua")
+
+-- Items
+dofile(modpath.."/craftitems.lua")
+
+-- Register
+dofile(modpath.."/register.lua")
