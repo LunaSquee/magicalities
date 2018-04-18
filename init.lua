@@ -28,5 +28,8 @@ dofile(modpath.."/table.lua")
 -- Items
 dofile(modpath.."/craftitems.lua")
 
+-- Scanner
+dofile(modpath.."/scanner.lua")
+
 -- Register
 dofile(modpath.."/register.lua")

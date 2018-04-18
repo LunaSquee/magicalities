@@ -1,28 +1,69 @@
 -- Magicalities crystals
 
+magicalities.crystals = {}
+
 local randbuff = PcgRandom(os.clock())
 
-local function generate_crystal_buffer(pos)
+local function compare(a,b)
+	return a[2] > b[2]
+end
+
+local function crystal_infotext(pos, data)
+	local meta = minetest.get_meta(pos)
+	local node = minetest.get_node(pos)
+	local nodedef = minetest.registered_nodes[node.name]
+	if not data then
+		data = minetest.deserialize(meta:get_string("contents"))
+	end
+
+	-- Sort
+	local sortable = {}
+	for name, v in pairs(data) do
+		sortable[#sortable + 1] = {name, v[1]}
+	end
+	table.sort(sortable, compare)
+
+	-- Create string
+	local str = nodedef.description.. "\n\n"
+	local datastrs = {}
+	for _, v in pairs(sortable) do
+		local elemdesc = magicalities.elements[v[1]].description
+		datastrs[#datastrs + 1] = v[2].."x "..elemdesc
+	end
+	str = str .. table.concat( datastrs, "\n")
+
+	meta:set_string("infotext", str)
+end
+
+function magicalities.crystals.generate_crystal_buffer(pos)
 	local final    = {}
 	local node     = minetest.get_node(pos)
 	local nodedef  = minetest.registered_nodes[node.name]
 	local self_cnt = randbuff:next(10, 60)
+	local added    = 0
 
 	for name, data in pairs(magicalities.elements) do
-		if #final > 5 then break end
+		if added > 5 then break end
 		if not data.inheritance then
 			if name == nodedef["_element"] then
 				final[name] = {self_cnt, self_cnt}
+				added = added + 1
 			else
 				if randbuff:next(0, 5) == 0 then
 					local cnt = randbuff:next(0, math.floor(self_cnt / 4))
-					final[name] = {cnt, cnt}
+					if cnt > 0 then
+						final[name] = {cnt, cnt}
+						added = added + 1
+					end
 				end
 			end
 		else
 			if randbuff:next(0, 15) == 0 then
 				local cnt = randbuff:next(0, math.floor(self_cnt / 8))
-				final[name] = {cnt, cnt}
+				if cnt > 0 then
+					final[name] = {cnt, cnt}
+					added = added + 1
+				end
 			end
 		end
 	end
@@ -31,13 +72,13 @@ local function generate_crystal_buffer(pos)
 end
 
 local function crystal_rightclick(pos, node, clicker, itemstack, pointed_thing)
-	local output = generate_crystal_buffer(pos)
+	local output = magicalities.crystals.generate_crystal_buffer(pos)
 	local meta   = minetest.get_meta(pos)
 
 	-- Add contents to the crystal
 	local contents = minetest.deserialize(meta:get_string("contents"))
 	if not contents then
-		contents = generate_crystal_buffer(pos)
+		contents = magicalities.crystals.generate_crystal_buffer(pos)
 		meta:set_string("contents", minetest.serialize(contents))
 	end
 

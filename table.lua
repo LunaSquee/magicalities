@@ -24,7 +24,7 @@ local function arcane_table_formspec(data)
 		local y = -0.4
 
 		if not data[name] then
-			cp = "^[colorize:#2f2f2f"
+			cp = "^[colorize:#2f2f2f:200"
 		end
 
 		if pos[2] > 2.5 then

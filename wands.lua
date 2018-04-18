@@ -142,7 +142,7 @@ local function initialize_wand(stack)
 
 	for name, data in pairs(magicalities.elements) do
 		if not data.inheritance then
-			data_table[name] = 10
+			data_table[name] = 0
 		end
 	end
 
@@ -206,12 +206,6 @@ local function use_wand(itemstack, user, pointed_thing)
 		magicalities.wands.update_wand_desc(itemstack)
 	end
 
-	if not magicalities.wands.wand_has_contents(itemstack, {water = 5}) then
-		return itemstack
-	end
-
-	--itemstack = magicalities.wands.wand_take_contents(itemstack, {water = 5})
-
 	-- Calculate velocity
 	local dir = user:get_look_dir()
 	local vel = {x=0,y=0,z=0}
@@ -225,7 +219,7 @@ local function use_wand(itemstack, user, pointed_thing)
 	pos.y = pos.y + (dir.y * 2) + 1.5
 	pos.z = pos.z + (dir.z * 2)
 
-	for i = 1, 8 do
+	for i = 1, 16 do
 		-- Deviation
 		local relvel = {x=0,y=0,z=0}
 		relvel.x = vel.x + (randparticles:next((-i/2.5) * 1000, (i/2.5) * 1000) / 1000)

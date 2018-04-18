@@ -14,7 +14,3 @@ minetest.register_craftitem("magicalities:cap_gold", {
 	inventory_image = "magicalities_cap_gold.png"
 })
 
-minetest.register_craftitem("magicalities:element_ring", {
-	description = "Elemental Ring",
-	inventory_image = "magicalities_element_ring.png"
-})

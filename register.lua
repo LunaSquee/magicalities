@@ -44,6 +44,18 @@ local recipes = {
 			["dark"]  = 25,
 			["air"]   = 25,
 		}
+	},
+	{
+		input = {
+			{"default:gold_ingot", "default:gold_ingot", "default:gold_ingot"},
+			{"default:gold_ingot", "",                   "default:gold_ingot"},
+		},
+		output = "magicalities:cap_gold",
+		requirements = {
+			["earth"] = 5,
+			["light"] = 5,
+			["dark"]  = 5,
+		}
 	}
 }
 
