@@ -72,7 +72,6 @@ function magicalities.crystals.generate_crystal_buffer(pos)
 end
 
 local function crystal_rightclick(pos, node, clicker, itemstack, pointed_thing)
-	local output = magicalities.crystals.generate_crystal_buffer(pos)
 	local meta   = minetest.get_meta(pos)
 
 	-- Add contents to the crystal
@@ -99,6 +98,30 @@ local function crystal_rightclick(pos, node, clicker, itemstack, pointed_thing)
 		if count > 0 then
 			contents[name][1] = contents[name][1] - count
 		end
+	end
+
+	-- Take - Particles
+	local cpls = clicker:get_pos()
+	cpls.y = cpls.y + 1
+	for name in pairs(can_put) do
+		local ecolor = magicalities.elements[name].color
+		local dist   = vector.distance(cpls, pos)
+		local normal = vector.normalize(vector.subtract(cpls, pos))
+		local spawn  = vector.add(normal, pos)
+		local vel    = vector.multiply(normal, 4)
+		local extime = dist / 4
+
+		minetest.add_particle({
+			pos = spawn,
+			velocity = vel,
+			acceleration = vel,
+			expirationtime = extime,
+			size = 4,
+			collisiondetection = true,
+			collision_removal = true,
+			texture = "magicalities_spark.png^[multiply:"..ecolor.."",
+			glow = 2
+		})
 	end
 
 	itemstack = magicalities.wands.wand_insert_contents(itemstack, can_put)

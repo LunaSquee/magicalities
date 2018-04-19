@@ -22,6 +22,9 @@ dofile(modpath.."/crystals.lua")
 -- Wands
 dofile(modpath.."/wands.lua")
 
+-- Wand focuses
+dofile(modpath.."/focuses.lua")
+
 -- Tables
 dofile(modpath.."/table.lua")
 

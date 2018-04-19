@@ -1,12 +1,12 @@
 -- Scans crystals for their contents
 
 local fmspecelems = {
-	["earth"] = {2, 0.15},
-	["water"] = {0, 1},
-	["air"]   = {4, 1},
-	["fire"]  = {2, 4.85},
-	["light"] = {0, 4},
-	["dark"]  = {4, 4}
+	["earth"] = {2, 0.3},
+	["water"] = {0, 1.25},
+	["air"]   = {4, 1.25},
+	["fire"]  = {2, 5.1},
+	["light"] = {0, 4.25},
+	["dark"]  = {4, 4.25}
 }
 
 local function create_formspec(elements, desc)
@@ -42,7 +42,7 @@ local function create_formspec(elements, desc)
 		default.gui_bg..
 		default.gui_bg_img..
 		"label[0,0;"..desc.."]"..
-		"image[0,0.3;6,6;magicalities_symbol_hexagram.png]"..
+		"image[0,0.55;6,6;magicalities_symbol_hexagram.png]"..
 		spec..
 		labels
 end
@@ -60,6 +60,7 @@ local function show_spec(i, placer, pointed_thing)
 	local contents = minetest.deserialize(meta:get_string("contents"))
 	if not contents then
 		contents = magicalities.crystals.generate_crystal_buffer(pos)
+		meta:set_string("contents", minetest.serialize(contents))
 	end
 
 	minetest.show_formspec(placer:get_player_name(), "magicalities:crystal_scanner", create_formspec(contents, nodedef.description))
@@ -70,5 +71,6 @@ minetest.register_craftitem("magicalities:element_ring", {
 	description = "Elemental Ring\nShows contents of crystals",
 	inventory_image = "magicalities_element_ring.png",
 	on_place = show_spec,
+	stack_max = 1,
 })
 
